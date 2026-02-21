@@ -187,7 +187,10 @@ class EmailModule(BaseOSINTModule):
         return domain.lower() in disposable_domains
 
     def _check_breaches(self, email: str) -> List[Dict]:
-        """Check HaveIBeenPwned for data breaches (requires API key for full results)."""
+        """Check multiple breach databases for exposed credentials."""
+        all_breaches = []
+
+        # 1. HaveIBeenPwned (requires API key for full results)
         if self.api_key:
             try:
                 resp = self.http.get(
@@ -198,13 +201,19 @@ class EmailModule(BaseOSINTModule):
                     },
                 )
                 if resp and resp.status_code == 200:
-                    return resp.json()
-                elif resp and resp.status_code == 404:
-                    return []
+                    for b in resp.json():
+                        all_breaches.append({
+                            "name": b.get("Name", "Unknown"),
+                            "date": b.get("BreachDate", ""),
+                            "description": b.get("Description", ""),
+                            "data_classes": b.get("DataClasses", []),
+                            "is_verified": b.get("IsVerified", False),
+                            "source": "HaveIBeenPwned",
+                        })
             except Exception as e:
                 logger.debug(f"HIBP check failed: {e}")
 
-        # Free alternative: check breach directory (basic)
+        # 2. XposedOrNot (free, no key needed)
         try:
             resp = self.http.get(
                 f"https://api.xposedornot.com/v1/check-email/{email}"
@@ -212,11 +221,94 @@ class EmailModule(BaseOSINTModule):
             if resp and resp.status_code == 200:
                 data = resp.json()
                 if "breaches" in data:
-                    return [{"name": b, "source": "XposedOrNot"} for b in data["breaches"]]
+                    for b in data["breaches"]:
+                        if not any(x["name"] == b for x in all_breaches):
+                            all_breaches.append({"name": b, "source": "XposedOrNot"})
         except Exception as e:
-            logger.debug(f"Alternative breach check failed: {e}")
+            logger.debug(f"XposedOrNot check failed: {e}")
 
-        return []
+        # 3. BreachDirectory (free tier)
+        try:
+            resp = self.http.post(
+                "https://breachdirectory.p.rapidapi.com/",
+                headers={
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-RapidAPI-Host": "breachdirectory.p.rapidapi.com",
+                    "X-RapidAPI-Key": self.config.get("RAPIDAPI_KEY", ""),
+                } if self.config.get("RAPIDAPI_KEY") else {},
+                data={"func": "auto", "term": email},
+            )
+            if resp and resp.status_code == 200:
+                data = resp.json()
+                if data.get("success") and data.get("result"):
+                    for entry in data["result"]:
+                        src = entry.get("sources", ["Unknown"])
+                        for s in src:
+                            if not any(x["name"] == s for x in all_breaches):
+                                all_breaches.append({
+                                    "name": s,
+                                    "has_password": entry.get("has_password", False),
+                                    "source": "BreachDirectory",
+                                })
+        except Exception as e:
+            logger.debug(f"BreachDirectory check failed: {e}")
+
+        # 4. LeakCheck (free tier — 10 req/day)
+        leakcheck_key = self.config.get("LEAKCHECK_API_KEY", "")
+        if leakcheck_key:
+            try:
+                resp = self.http.get(
+                    f"https://leakcheck.io/api/public?check={email}",
+                    headers={"X-API-Key": leakcheck_key},
+                )
+                if resp and resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("success") and data.get("sources"):
+                        for s in data["sources"]:
+                            name = s.get("name", "Unknown")
+                            if not any(x["name"] == name for x in all_breaches):
+                                all_breaches.append({
+                                    "name": name,
+                                    "date": s.get("date", ""),
+                                    "source": "LeakCheck",
+                                })
+            except Exception as e:
+                logger.debug(f"LeakCheck check failed: {e}")
+
+        # 5. EmailRep.io (free, no key — reputation scoring)
+        try:
+            resp = self.http.get(
+                f"https://emailrep.io/{email}",
+                headers={"User-Agent": "EireScope-OSINT"},
+            )
+            if resp and resp.status_code == 200:
+                data = resp.json()
+                if data.get("details", {}).get("credentials_leaked"):
+                    all_breaches.append({
+                        "name": "EmailRep Credential Leak",
+                        "reputation": data.get("reputation", ""),
+                        "suspicious": data.get("suspicious", False),
+                        "references": data.get("references", 0),
+                        "details": {
+                            "malicious_activity": data.get("details", {}).get("malicious_activity", False),
+                            "spam": data.get("details", {}).get("spam", False),
+                            "free_provider": data.get("details", {}).get("free_provider", False),
+                            "data_breach": data.get("details", {}).get("data_breach", False),
+                            "last_seen": data.get("details", {}).get("last_seen", ""),
+                        },
+                        "source": "EmailRep.io",
+                    })
+                # Store reputation data in entity metadata regardless
+                self._emailrep_data = {
+                    "reputation": data.get("reputation", ""),
+                    "suspicious": data.get("suspicious", False),
+                    "references": data.get("references", 0),
+                    "profiles": data.get("details", {}).get("profiles", []),
+                }
+        except Exception as e:
+            logger.debug(f"EmailRep check failed: {e}")
+
+        return all_breaches
 
     def _check_gravatar(self, email: str) -> Optional[Dict]:
         """Check for Gravatar profile associated with email."""
