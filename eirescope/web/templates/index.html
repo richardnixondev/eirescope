@@ -20,7 +20,7 @@
                 type="text"
                 name="query"
                 class="search-input"
-                placeholder="Enter email, username, phone, IP address, or domain..."
+                placeholder="Enter email, username, phone, IP, domain, or company name..."
                 value="{{ query or '' }}"
                 autofocus
                 required
@@ -32,6 +32,8 @@
                 <option value="phone">Phone Number</option>
                 <option value="ip_address">IP Address</option>
                 <option value="domain">Domain</option>
+                <option value="company">Company</option>
+                <option value="person">Person</option>
             </select>
             <button type="submit" class="btn btn-primary search-btn">
                 Investigate
@@ -44,7 +46,7 @@
     <div class="card">
         <div class="card-icon">👤</div>
         <h3>Username Search</h3>
-        <p>Scan 40+ platforms for matching profiles</p>
+        <p>Scan 200+ platforms for matching profiles</p>
     </div>
     <div class="card">
         <div class="card-icon">📧</div>
@@ -60,6 +62,11 @@
         <div class="card-icon">🌐</div>
         <h3>IP/Domain Recon</h3>
         <p>WHOIS, GeoIP, DNS records, subdomain enumeration</p>
+    </div>
+    <div class="card">
+        <div class="card-icon">🏢</div>
+        <h3>Irish CRO Lookup</h3>
+        <p>Company registrations, directors, status via CRO open data</p>
     </div>
 </div>
 

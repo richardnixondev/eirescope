@@ -95,4 +95,10 @@ class EntityValidator:
         validator = validators.get(entity_type)
         if validator and not validator(value):
             return False, value
+        # COMPANY and PERSON accept free-text — just require non-empty
+        if entity_type in (EntityType.COMPANY, EntityType.PERSON):
+            v = value.strip()
+            if not v:
+                return False, value
+            return True, v
         return True, cls.normalize(value, entity_type)
