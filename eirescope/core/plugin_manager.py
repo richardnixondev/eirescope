@@ -9,6 +9,7 @@ from eirescope.modules.phone_module import PhoneModule
 from eirescope.modules.ip_module import IPModule
 from eirescope.modules.domain_module import DomainModule
 from eirescope.modules.social_module import SocialMediaModule
+from eirescope.modules.irish_cro_module import IrishCROModule
 
 logger = logging.getLogger("eirescope.core.plugins")
 
@@ -20,6 +21,7 @@ AVAILABLE_MODULES = [
     IPModule,
     DomainModule,
     SocialMediaModule,
+    IrishCROModule,
 ]
 
 
