@@ -192,6 +192,8 @@ a:hover { text-decoration: underline; }
 .badge-dns_record { background: rgba(103,232,249,0.15); color: var(--color-dns_record); }
 .badge-url { background: rgba(56,189,248,0.15); color: var(--color-url); }
 .badge-hash { background: rgba(251,146,60,0.15); color: var(--color-hash); }
+.badge-company { background: rgba(244,114,182,0.15); color: var(--color-company); }
+.badge-person { background: rgba(192,132,252,0.15); color: var(--color-person); }
 .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
 
 /* Status */
@@ -248,6 +250,8 @@ a:hover { text-decoration: underline; }
 .dot-breach { background: var(--color-breach); }
 .dot-whois_info { background: var(--color-whois_info); }
 .dot-geo_location { background: var(--color-geo_location); }
+.dot-company { background: var(--color-company); }
+.dot-person { background: var(--color-person); }
 
 /* Filters */
 .entity-filters { display: flex; gap: 10px; margin-bottom: 15px; }
