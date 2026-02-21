@@ -2,9 +2,9 @@
 
 **Open-Source Intelligence Investigation Dashboard**
 
-EireScope is a modular OSINT (Open-Source Intelligence) tool designed to help law enforcement and investigators enrich, correlate, and visualize data from multiple intelligence sources through a single unified interface.
+EireScope is a modular OSINT (Open-Source Intelligence) tool designed to enrich, correlate, and visualize data from multiple intelligence sources through a single unified interface.
 
-Built with a focus on supporting Irish authorities (An Garda Siochana), EireScope consolidates username searches, email enrichment, phone analysis, IP reconnaissance, and domain investigation into one investigator-friendly web dashboard.
+EireScope consolidates username searches, email enrichment, phone analysis, IP reconnaissance, and domain recon into one easy-to-use web dashboard.
 
 ## Features
 
