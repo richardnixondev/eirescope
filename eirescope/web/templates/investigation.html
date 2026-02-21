@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Investigation: {{ inv.query }}{% endblock %}
+
+{% block head %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="investigation-header">
+    <div class="inv-info">
+        <h1>Investigation: <span class="mono accent">{{ inv.query }}</span></h1>
+        <div class="inv-meta">
+            <span class="badge badge-{{ inv.query_type }}">{{ inv.query_type }}</span>
+            <span class="status status-{{ inv.status }}">{{ inv.status }}</span>
+            <span class="meta-item">Started: {{ inv.created_at[:19] }}</span>
+            {% if inv.completed_at %}
+            <span class="meta-item">Completed: {{ inv.completed_at[:19] }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="inv-actions">
+        <a href="/export/{{ inv.id }}" class="btn btn-secondary">Export Report</a>
+        <a href="/" class="btn btn-primary">New Search</a>
+    </div>
+</div>
+
+<!-- Stats cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ inv.total_entities }}</div>
+        <div class="stat-label">Entities Found</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ inv.total_relationships }}</div>
+        <div class="stat-label">Relationships</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ inv.modules_run|length }}</div>
+        <div class="stat-label">Modules Run</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ inv.entity_counts|length }}</div>
+        <div class="stat-label">Entity Types</div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+    <button class="tab active" data-tab="graph">Relationship Graph</button>
+    <button class="tab" data-tab="entities">Entities ({{ inv.total_entities }})</button>
+    <button class="tab" data-tab="details">Details</button>
+    <button class="tab" data-tab="modules">Modules</button>
+</div>
+
+<!-- Graph Tab -->
+<div class="tab-content active" id="tab-graph">
+    <div class="graph-container" id="entity-graph"></div>
+    <div class="graph-legend">
+        <span class="legend-item"><span class="dot dot-email"></span> Email</span>
+        <span class="legend-item"><span class="dot dot-username"></span> Username</span>
+        <span class="legend-item"><span class="dot dot-domain"></span> Domain</span>
+        <span class="legend-item"><span class="dot dot-ip_address"></span> IP Address</span>
+        <span class="legend-item"><span class="dot dot-social_profile"></span> Social Profile</span>
+        <span class="legend-item"><span class="dot dot-phone"></span> Phone</span>
+        <span class="legend-item"><span class="dot dot-breach"></span> Breach</span>
+        <span class="legend-item"><span class="dot dot-whois_info"></span> WHOIS</span>
+        <span class="legend-item"><span class="dot dot-geo_location"></span> Location</span>
+    </div>
+</div>
+
+<!-- Entities Tab -->
+<div class="tab-content" id="tab-entities">
+    <div class="entity-filters">
+        <input type="text" id="entity-search" placeholder="Filter entities..." class="filter-input">
+        <select id="entity-type-filter" class="type-select">
+            <option value="all">All Types</option>
+            {% for type_name, count in inv.entity_counts.items() %}
+            <option value="{{ type_name }}">{{ type_name }} ({{ count }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <table class="data-table" id="entities-table">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Value</th>
+                <th>Source</th>
+                <th>Confidence</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entity in inv.entities %}
+            <tr data-type="{{ entity.entity_type }}" data-value="{{ entity.value|lower }}">
+                <td><span class="badge badge-{{ entity.entity_type }}">{{ entity.entity_type }}</span></td>
+                <td class="mono entity-value">
+                    {% if entity.value.startswith('http') %}
+                    <a href="{{ entity.value }}" target="_blank" rel="noopener">{{ entity.value }}</a>
+                    {% else %}
+                    {{ entity.value }}
+                    {% endif %}
+                </td>
+                <td>{{ entity.source_module }}</td>
+                <td>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: {{ (entity.confidence * 100)|int }}%"></div>
+                        <span>{{ (entity.confidence * 100)|int }}%</span>
+                    </div>
+                </td>
+                <td>
+                    {% if entity.metadata %}
+                    <button class="btn btn-sm btn-ghost" onclick="toggleDetails(this)">Show</button>
+                    <div class="entity-details hidden">
+                        <pre>{{ entity.metadata|tojson(indent=2) }}</pre>
+                    </div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Details Tab -->
+<div class="tab-content" id="tab-details">
+    <h3>Entity Type Distribution</h3>
+    <div class="type-distribution">
+        {% for type_name, count in inv.entity_counts.items() %}
+        <div class="dist-row">
+            <span class="badge badge-{{ type_name }}">{{ type_name }}</span>
+            <div class="dist-bar-container">
+                <div class="dist-bar" style="width: {{ (count / inv.total_entities * 100)|int }}%"></div>
+            </div>
+            <span class="dist-count">{{ count }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h3>Relationship Types</h3>
+    <div class="type-distribution">
+        {% for rel_type, count in inv.relationship_counts.items() %}
+        <div class="dist-row">
+            <span class="rel-type">{{ rel_type }}</span>
+            <div class="dist-bar-container">
+                <div class="dist-bar dist-bar-rel" style="width: {{ (count / inv.total_relationships * 100)|int }}%"></div>
+            </div>
+            <span class="dist-count">{{ count }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modules Tab -->
+<div class="tab-content" id="tab-modules">
+    <h3>Modules Executed</h3>
+    <ul class="module-list">
+        {% for mod in inv.modules_run %}
+        <li class="module-item {% if 'FAILED' in mod %}module-failed{% endif %}">
+            {% if 'FAILED' in mod %}❌{% else %}✅{% endif %}
+            {{ mod }}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const investigationData = {{ json_data|safe }};
+</script>
+<script src="/static/js/app.js"></script>
+<script src="/static/js/graph.js"></script>
+{% endblock %}

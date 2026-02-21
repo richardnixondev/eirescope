@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Investigation History{% endblock %}
+
+{% block content %}
+<h1>Investigation History</h1>
+
+{% if investigations %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Query</th>
+            <th>Type</th>
+            <th>Entities</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for inv in investigations %}
+        <tr>
+            <td class="mono">{{ inv.initial_query }}</td>
+            <td><span class="badge badge-{{ inv.initial_type }}">{{ inv.initial_type }}</span></td>
+            <td>{{ inv.entity_count }}</td>
+            <td><span class="status status-{{ inv.status }}">{{ inv.status }}</span></td>
+            <td>{{ inv.created_at[:16] }}</td>
+            <td>
+                <a href="/investigation/{{ inv.id }}" class="btn btn-sm">View</a>
+                <a href="/export/{{ inv.id }}" class="btn btn-sm btn-secondary">Export</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <p>No investigations yet. <a href="/">Start your first investigation</a>.</p>
+</div>
+{% endif %}
+{% endblock %}

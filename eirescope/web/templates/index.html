@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>EireScope <span class="accent">OSINT</span></h1>
+    <p class="hero-sub">Open-Source Intelligence Investigation Dashboard</p>
+</div>
+
+{% if error %}
+<div class="alert alert-error">
+    <strong>Error:</strong> {{ error }}
+</div>
+{% endif %}
+
+<div class="search-container">
+    <form action="/search" method="POST" class="search-form">
+        <div class="search-input-group">
+            <input
+                type="text"
+                name="query"
+                class="search-input"
+                placeholder="Enter email, username, phone, IP address, or domain..."
+                value="{{ query or '' }}"
+                autofocus
+                required
+            >
+            <select name="entity_type" class="type-select">
+                <option value="auto">Auto-detect</option>
+                <option value="email">Email</option>
+                <option value="username">Username</option>
+                <option value="phone">Phone Number</option>
+                <option value="ip_address">IP Address</option>
+                <option value="domain">Domain</option>
+            </select>
+            <button type="submit" class="btn btn-primary search-btn">
+                Investigate
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="info-cards">
+    <div class="card">
+        <div class="card-icon">👤</div>
+        <h3>Username Search</h3>
+        <p>Scan 40+ platforms for matching profiles</p>
+    </div>
+    <div class="card">
+        <div class="card-icon">📧</div>
+        <h3>Email Enrichment</h3>
+        <p>Breach checks, domain analysis, provider detection</p>
+    </div>
+    <div class="card">
+        <div class="card-icon">📱</div>
+        <h3>Phone Analysis</h3>
+        <p>Carrier detection, Irish number classification</p>
+    </div>
+    <div class="card">
+        <div class="card-icon">🌐</div>
+        <h3>IP/Domain Recon</h3>
+        <p>WHOIS, GeoIP, DNS records, subdomain enumeration</p>
+    </div>
+</div>
+
+{% if recent_investigations %}
+<div class="section">
+    <h2>Recent Investigations</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Query</th>
+                <th>Type</th>
+                <th>Entities</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inv in recent_investigations %}
+            <tr>
+                <td class="mono">{{ inv.initial_query }}</td>
+                <td><span class="badge badge-{{ inv.initial_type }}">{{ inv.initial_type }}</span></td>
+                <td>{{ inv.entity_count }}</td>
+                <td><span class="status status-{{ inv.status }}">{{ inv.status }}</span></td>
+                <td>{{ inv.created_at[:16] }}</td>
+                <td><a href="/investigation/{{ inv.id }}" class="btn btn-sm">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="section modules-section">
+    <h2>Available Modules</h2>
+    <div class="module-grid">
+        {% for module in modules %}
+        <div class="module-card">
+            <h4>{{ module.name }}</h4>
+            <p>{{ module.description }}</p>
+            <div class="module-types">
+                {% for t in module.supported_types %}
+                <span class="badge badge-{{ t }}">{{ t }}</span>
+                {% endfor %}
+            </div>
+            {% if module.requires_api_key %}
+            <span class="badge badge-warning">API Key Required</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

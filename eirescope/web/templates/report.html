@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EireScope Report — {{ inv.query }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1a1a2e; line-height: 1.6; padding: 40px; max-width: 1000px; margin: 0 auto; }
+        .report-header { border-bottom: 3px solid #16213e; padding-bottom: 20px; margin-bottom: 30px; }
+        .report-header h1 { font-size: 28px; color: #16213e; }
+        .report-header .subtitle { color: #666; font-size: 14px; margin-top: 5px; }
+        .report-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; font-size: 13px; }
+        .report-meta dt { font-weight: bold; color: #16213e; }
+        .report-meta dd { color: #444; }
+        h2 { color: #16213e; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin: 25px 0 15px; font-size: 20px; }
+        h3 { color: #333; margin: 20px 0 10px; font-size: 16px; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .stat { background: #f5f6fa; padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-val { font-size: 28px; font-weight: bold; color: #0f3460; }
+        .stat-label { font-size: 12px; color: #666; text-transform: uppercase; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
+        th { background: #16213e; color: white; padding: 10px 12px; text-align: left; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        tr:nth-child(even) { background: #f9f9fa; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: #e0e7ff; color: #1e3a5f; }
+        .confidence { display: inline-block; min-width: 40px; text-align: center; }
+        .mono { font-family: 'Courier New', monospace; font-size: 12px; }
+        .disclaimer { margin-top: 40px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; font-size: 12px; }
+        .footer-report { margin-top: 30px; text-align: center; color: #999; font-size: 11px; border-top: 1px solid #eee; padding-top: 15px; }
+        @media print { body { padding: 20px; } .stats { page-break-inside: avoid; } }
+    </style>
+</head>
+<body>
+    <div class="report-header">
+        <h1>EireScope Investigation Report</h1>
+        <p class="subtitle">Open-Source Intelligence Analysis</p>
+        <dl class="report-meta">
+            <dt>Investigation ID</dt>
+            <dd class="mono">{{ inv.id[:12] }}...</dd>
+            <dt>Target Query</dt>
+            <dd class="mono">{{ inv.query }}</dd>
+            <dt>Entity Type</dt>
+            <dd>{{ inv.query_type }}</dd>
+            <dt>Status</dt>
+            <dd>{{ inv.status }}</dd>
+            <dt>Started</dt>
+            <dd>{{ inv.created_at }}</dd>
+            <dt>Completed</dt>
+            <dd>{{ inv.completed_at or 'N/A' }}</dd>
+        </dl>
+    </div>
+
+    <h2>Summary</h2>
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-val">{{ inv.total_entities }}</div>
+            <div class="stat-label">Entities</div>
+        </div>
+        <div class="stat">
+            <div class="stat-val">{{ inv.total_relationships }}</div>
+            <div class="stat-label">Relationships</div>
+        </div>
+        <div class="stat">
+            <div class="stat-val">{{ inv.modules_run|length }}</div>
+            <div class="stat-label">Modules Run</div>
+        </div>
+        <div class="stat">
+            <div class="stat-val">{{ inv.entity_counts|length }}</div>
+            <div class="stat-label">Entity Types</div>
+        </div>
+    </div>
+
+    <h2>Modules Executed</h2>
+    <ul>
+        {% for mod in inv.modules_run %}
+        <li>{% if 'FAILED' in mod %}&#10060;{% else %}&#9989;{% endif %} {{ mod }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Discovered Entities</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Value</th>
+                <th>Source Module</th>
+                <th>Confidence</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entity in inv.entities %}
+            <tr>
+                <td><span class="badge">{{ entity.entity_type }}</span></td>
+                <td class="mono">{{ entity.value }}</td>
+                <td>{{ entity.source_module }}</td>
+                <td class="confidence">{{ (entity.confidence * 100)|int }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Entity Relationships</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Source</th>
+                <th>Relationship</th>
+                <th>Target</th>
+                <th>Confidence</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rel in inv.relationships %}
+            <tr>
+                <td class="mono">{{ rel.source_entity_id[:8] }}...</td>
+                <td>{{ rel.relationship_type }}</td>
+                <td class="mono">{{ rel.target_entity_id[:8] }}...</td>
+                <td class="confidence">{{ (rel.confidence * 100)|int }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="disclaimer">
+        <strong>Disclaimer:</strong> This report contains information gathered from publicly available
+        sources only. The accuracy of this data depends on the reliability of external sources.
+        All intelligence should be verified through independent means before use in any legal proceedings.
+    </div>
+
+    <div class="footer-report">
+        <p>Generated by EireScope v0.1.0 — Open-Source Intelligence Dashboard</p>
+        <p>Report generated at {{ inv.completed_at or inv.created_at }}</p>
+    </div>
+</body>
+</html>

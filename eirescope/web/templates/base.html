@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EireScope{% endblock %} — OSINT Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="/">
+                <span class="brand-icon">🔍</span>
+                <span class="brand-text">EireScope</span>
+                <span class="brand-tag">OSINT</span>
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Search</a>
+            <a href="/history" class="nav-link">History</a>
+            <a href="/api/modules" class="nav-link">Modules</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>EireScope v0.1.0 — Open-Source Intelligence Dashboard</p>
+        <p class="footer-note">All data from publicly available sources.</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
