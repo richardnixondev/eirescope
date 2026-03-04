@@ -31,6 +31,9 @@ jinja_env = Environment(
     autoescape=True,
 )
 
+# Umami Analytics — inject website ID into all templates
+jinja_env.globals["umami_website_id"] = os.getenv("EIRESCOPE_UMAMI_WEBSITE_ID", "")
+
 # Initialize core components — always use /tmp for SQLite (avoids filesystem restrictions)
 import tempfile
 _db_path = os.path.join(tempfile.gettempdir(), "eirescope_investigations.db")

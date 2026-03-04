@@ -1,0 +1,10 @@
+.git
+.gitignore
+.claude
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.env
+README.md
+LICENSE

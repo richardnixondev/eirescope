@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}EireScope{% endblock %} — OSINT Dashboard</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    {% if umami_website_id %}
+    <script defer src="https://analytics.richardnixon.dev/script.js"
+            data-website-id="{{ umami_website_id }}"></script>
+    {% endif %}
     {% block head %}{% endblock %}
 </head>
 <body>
